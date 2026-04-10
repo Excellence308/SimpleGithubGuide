@@ -2,6 +2,62 @@
   "branch": "main",
   "commits": [
     {
+      "sha": "7443395",
+      "author": "4gnusd3i",
+      "time": "2025-02-06T09:43:11+01:00",
+      "message": "Initial commit",
+      "labels": []
+    },
+    {
+      "sha": "1e6764e",
+      "author": "4gnusd3i",
+      "time": "2025-02-06T10:03:07+01:00",
+      "message": "Added files for webpage and readme",
+      "labels": []
+    },
+    {
+      "sha": "61997e7",
+      "author": "4gnusd3i",
+      "time": "2025-02-06T10:16:53+01:00",
+      "message": "Updated ReadMe",
+      "labels": []
+    },
+    {
+      "sha": "a526fbe",
+      "author": "4gnusd3i",
+      "time": "2025-02-06T10:30:04+01:00",
+      "message": "Readme guide finished",
+      "labels": []
+    },
+    {
+      "sha": "879da65",
+      "author": "4gnusd3i",
+      "time": "2025-02-06T11:00:04+01:00",
+      "message": "Updated Readme",
+      "labels": []
+    },
+    {
+      "sha": "09eb4b0",
+      "author": "4gnusd3i",
+      "time": "2025-02-06T11:00:46+01:00",
+      "message": "Update readme formatting",
+      "labels": []
+    },
+    {
+      "sha": "37d2ff2",
+      "author": "4gnusd3i",
+      "time": "2025-02-06T11:02:20+01:00",
+      "message": "small changes to readme",
+      "labels": []
+    },
+    {
+      "sha": "23bfbcb",
+      "author": "4gnusd3i",
+      "time": "2025-02-06T11:04:01+01:00",
+      "message": "formatting",
+      "labels": []
+    },
+    {
       "sha": "5499e23",
       "author": "4gnusd3i",
       "time": "2025-02-06T11:11:17+01:00",
@@ -213,6 +269,13 @@
       "author": "Excellence308",
       "time": "2026-04-10T11:25:44+02:00",
       "message": "Merge remote-tracking branch 'origin/visitors'",
+      "labels": []
+    },
+    {
+      "sha": "125e384",
+      "author": "Excellence308",
+      "time": "2026-04-10T11:41:53+02:00",
+      "message": "Make visualizers work without GitHub API",
       "labels": [
         "HEAD",
         "main"
@@ -227,8 +290,8 @@
     },
     {
       "file": "AOR90.txt",
-      "name": "AOR90",
-      "verified": true
+      "name": "AOR90.txt",
+      "verified": false
     },
     {
       "file": "Excellence308",
@@ -242,13 +305,13 @@
     },
     {
       "file": "RefridgeRaider.bmp",
-      "name": "RefridgeRaider",
-      "verified": true
+      "name": "RefridgeRaider.bmp",
+      "verified": false
     },
     {
       "file": "hisham611.txt",
-      "name": "hisham611",
-      "verified": true
+      "name": "hisham611.txt",
+      "verified": false
     },
     {
       "file": "oksnoopy",

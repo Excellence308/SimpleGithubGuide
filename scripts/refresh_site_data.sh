@@ -22,7 +22,7 @@ tags_json="$(
 )"
 
 commits_json="$(
-  git log --pretty=format:'%H%x09%h%x09%an%x09%ad%x09%s' --date=iso-strict -n 30 |
+  git log main --pretty=format:'%H%x09%h%x09%an%x09%ad%x09%s' --date=iso-strict |
     jq -R -s '
       split("\n")
       | map(select(length > 0) | split("\t"))
@@ -37,7 +37,7 @@ commits_json="$(
 )"
 
 identities_json="$(
-  git log --pretty=format:'%an' |
+  git log main --pretty=format:'%an' |
     jq -R -s '
       split("\n")
       | map(select(length > 0) | ascii_downcase)
@@ -54,8 +54,8 @@ visitors_json="$(
           . as $file
           | {
               file: $file,
-              name: ($file | sub("\\.[^.]+$"; "")),
-              verified: (($identities | index(($file | sub("\\.[^.]+$"; "") | ascii_downcase))) != null)
+              name: $file,
+              verified: (($identities | index(($file | ascii_downcase))) != null)
             }
         )
     '
