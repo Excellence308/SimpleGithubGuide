@@ -293,6 +293,7 @@ function renderVisitorMap(
 
   const points = createVisitorLayout(visitors.length);
   let activeNode = null;
+  let activeMode = "";
   const starNodes = [];
 
   visitors.forEach((visitor, index) => {
@@ -310,15 +311,22 @@ function renderVisitorMap(
     label.textContent = visitor.name;
     node.appendChild(label);
 
-    node.addEventListener("focus", () => activateVisitor(node, visitor, point));
-    node.addEventListener("click", () => activateVisitor(node, visitor, point));
+    node.addEventListener("mouseenter", () => activateVisitor(node, visitor, point, false, "hover"));
+    node.addEventListener("mouseleave", () => {
+      if (activeNode === node && activeMode === "hover") {
+        clearActiveVisitor();
+      }
+    });
+    node.addEventListener("focus", () => activateVisitor(node, visitor, point, true, "focus"));
+    node.addEventListener("blur", () => {
+      if (activeNode === node && activeMode === "focus") {
+        clearActiveVisitor();
+      }
+    });
+    node.addEventListener("click", () => activateVisitor(node, visitor, point, true, "click"));
 
     nodeLayer.appendChild(node);
     starNodes.push({ node, point });
-
-    if (index === 0) {
-      activateVisitor(node, visitor, point, false);
-    }
   });
 
   visitorElement.addEventListener("pointermove", (event) => {
@@ -335,14 +343,29 @@ function renderVisitorMap(
     tooltip.classList.remove("is-visible");
     visitorElement.style.setProperty("--visitor-glow-opacity", "0");
     displaceVisitorStars(starNodes, null, null, 1, 1);
+
+    if (activeMode === "hover") {
+      clearActiveVisitor();
+    }
   });
 
-  function activateVisitor(node, visitor, point, showTooltip = true) {
+  function clearActiveVisitor() {
     if (activeNode) {
       activeNode.classList.remove("is-active");
     }
 
+    activeNode = null;
+    activeMode = "";
+    tooltip.classList.remove("is-visible");
+  }
+
+  function activateVisitor(node, visitor, point, showTooltip = true, mode = "click") {
+    if (activeNode && activeNode !== node) {
+      activeNode.classList.remove("is-active");
+    }
+
     activeNode = node;
+    activeMode = mode;
     activeNode.classList.add("is-active");
 
     tooltipName.textContent = visitor.name;
@@ -351,6 +374,8 @@ function renderVisitorMap(
 
     if (showTooltip) {
       tooltip.classList.add("is-visible");
+    } else {
+      tooltip.classList.remove("is-visible");
     }
   }
 }
@@ -477,6 +502,12 @@ function displaceVisitorStars(stars, mouseX, mouseY, width, height) {
   }
 
   stars.forEach(({ node, point }) => {
+    if (node.classList.contains("is-active")) {
+      node.style.setProperty("--star-offset-x", "0px");
+      node.style.setProperty("--star-offset-y", "0px");
+      return;
+    }
+
     const starX = (point.x / 100) * width;
     const starY = (point.y / 100) * height;
     const dx = starX - mouseX;
