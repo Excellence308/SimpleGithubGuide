@@ -524,11 +524,12 @@ h1 {
 
 .commit-node-badges {
   position: absolute;
-  top: -1.45rem;
+  bottom: calc(100% + 0.45rem);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 0.3rem;
+  flex-direction: column;
+  gap: 0.22rem;
   align-items: center;
   pointer-events: none;
 }

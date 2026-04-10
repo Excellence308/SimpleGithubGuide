@@ -18,7 +18,7 @@ async function initCommitGraph(graphElement) {
 
   const owner = graphElement.dataset.owner;
   const repo = graphElement.dataset.repo;
-  const branch = graphElement.dataset.branch || "main";
+  const preferredBranch = graphElement.dataset.branch || "";
   const limit = Number.parseInt(graphElement.dataset.commitLimit || "18", 10);
 
   if (!owner || !repo) {
@@ -34,12 +34,14 @@ async function initCommitGraph(graphElement) {
   }
 
   try {
+    const branch = await fetchBranchName(owner, repo, preferredBranch);
     const [commits, tags] = await Promise.all([
       fetchCommits(owner, repo, branch, limit),
       fetchTags(owner, repo)
     ]);
 
-    const commitData = decorateCommits(commits, tags, branch);
+    const branchHeadSha = commits[0]?.sha || "";
+    const commitData = decorateCommits(commits, tags, branch, branchHeadSha);
     renderCommitGraph(
       commitData,
       graphElement,
@@ -63,6 +65,25 @@ async function initCommitGraph(graphElement) {
       inspectorSha
     );
   }
+}
+
+async function fetchBranchName(owner, repo, preferredBranch) {
+  if (preferredBranch) {
+    return preferredBranch;
+  }
+
+  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+    headers: {
+      Accept: "application/vnd.github+json"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub repository API returned ${response.status}.`);
+  }
+
+  const payload = await response.json();
+  return payload.default_branch || "main";
 }
 
 async function fetchCommits(owner, repo, branch, limit) {
@@ -152,7 +173,7 @@ async function fetchAnnotatedTagTarget(owner, repo, tagSha) {
   return payload?.object?.type === "commit" ? payload.object.sha : null;
 }
 
-function decorateCommits(commits, tags, branch) {
+function decorateCommits(commits, tags, branch, branchHeadSha) {
   const tagsBySha = new Map();
 
   tags.forEach((tag) => {
@@ -169,7 +190,7 @@ function decorateCommits(commits, tags, branch) {
 
   const chronologicalCommits = [...commits].reverse();
 
-  return chronologicalCommits.map((entry, index) => {
+  return chronologicalCommits.map((entry) => {
     const author =
       entry.author?.login ||
       entry.commit?.author?.name ||
@@ -184,7 +205,7 @@ function decorateCommits(commits, tags, branch) {
     const sha = entry.sha.slice(0, 7);
     const labels = [];
 
-    if (index === chronologicalCommits.length - 1) {
+    if (entry.sha === branchHeadSha) {
       labels.push("HEAD", branch);
     }
 
