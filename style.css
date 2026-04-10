@@ -627,6 +627,247 @@ h1 {
   line-height: 1.5;
 }
 
+.visitor-experience {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.visitor-stage {
+  --visitor-glow-x: 50%;
+  --visitor-glow-y: 50%;
+  position: relative;
+  min-height: 430px;
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at 24% 22%, rgba(139, 233, 207, 0.16), transparent 24%),
+    radial-gradient(circle at 82% 74%, rgba(255, 209, 102, 0.16), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 34%),
+    rgba(8, 18, 31, 0.94);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.visitor-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle 170px at var(--visitor-glow-x) var(--visitor-glow-y), rgba(139, 233, 207, 0.18), transparent 58%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.visitor-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 14% 18%, rgba(255, 255, 255, 0.8) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 26% 72%, rgba(255, 255, 255, 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 44% 30%, rgba(255, 255, 255, 0.6) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 58% 66%, rgba(255, 255, 255, 0.7) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 74% 24%, rgba(255, 255, 255, 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 84% 54%, rgba(255, 255, 255, 0.75) 0 1px, transparent 1.5px);
+  pointer-events: none;
+  opacity: 0.55;
+  z-index: 0;
+}
+
+.visitor-stage-copy {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  right: 1rem;
+  z-index: 2;
+}
+
+.visitor-stage-copy p {
+  margin: 0;
+  max-width: 36ch;
+  color: rgba(247, 243, 232, 0.76);
+  line-height: 1.5;
+}
+
+.visitor-nodes {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.visitor-node {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(180deg, rgba(247, 243, 232, 0.95), rgba(198, 207, 216, 0.88));
+  box-shadow:
+    0 0 0 0 rgba(247, 243, 232, 0.18),
+    0 0 18px rgba(247, 243, 232, 0.2);
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.visitor-node::before {
+  content: "";
+  position: absolute;
+  inset: -0.45rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.visitor-node::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2.6rem;
+  height: 2.6rem;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.16), transparent 66%);
+  pointer-events: none;
+}
+
+.visitor-node:hover,
+.visitor-node:focus-visible,
+.visitor-node.is-active {
+  transform: translate(-50%, -50%) scale(1.28);
+  outline: none;
+}
+
+.visitor-node:hover::before,
+.visitor-node:focus-visible::before,
+.visitor-node.is-active::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.visitor-node.is-verified {
+  background: linear-gradient(180deg, #d9fff3, #8be9cf);
+  box-shadow:
+    0 0 0 0 rgba(139, 233, 207, 0.18),
+    0 0 26px rgba(139, 233, 207, 0.42);
+}
+
+.visitor-node-label {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(8, 18, 31, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f7f3e8;
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.visitor-tooltip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  min-width: 180px;
+  max-width: 250px;
+  padding: 0.8rem 0.9rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 18, 31, 0.92);
+  box-shadow: 0 20px 60px rgba(3, 9, 16, 0.35);
+  transform: translate(-50%, calc(-100% - 1rem));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+  z-index: 3;
+}
+
+.visitor-tooltip.is-visible {
+  opacity: 1;
+}
+
+.visitor-tooltip strong,
+.visitor-tooltip span {
+  display: block;
+}
+
+.visitor-tooltip strong {
+  margin-bottom: 0.2rem;
+  font-size: 0.98rem;
+}
+
+.visitor-tooltip span {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.visitor-inspector {
+  min-height: 430px;
+  padding: 1.2rem;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 36%),
+    rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.visitor-kicker {
+  margin: 0 0 0.4rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.72rem;
+}
+
+.visitor-inspector h3 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+}
+
+.visitor-summary {
+  margin: 0.9rem 0 1.2rem;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.visitor-stats {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0 0 1.2rem;
+}
+
+.visitor-stats div {
+  padding: 0.8rem 0.9rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.visitor-stats dt {
+  margin: 0 0 0.3rem;
+  color: #fff4ce;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.visitor-stats dd {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 @keyframes shimmer {
   to {
     transform: translateX(120%);
@@ -703,6 +944,10 @@ h1 {
   .history-experience {
     grid-template-columns: 1fr;
   }
+
+  .visitor-experience {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 720px) {
@@ -731,8 +976,17 @@ h1 {
     height: 460px;
   }
 
+  .visitor-stage {
+    min-height: 480px;
+  }
+
   .graph-stage-copy p {
     max-width: 24ch;
+    font-size: 0.92rem;
+  }
+
+  .visitor-stage-copy p {
+    max-width: 25ch;
     font-size: 0.92rem;
   }
 
@@ -740,9 +994,18 @@ h1 {
     min-height: 0;
   }
 
+  .visitor-inspector {
+    min-height: 0;
+  }
+
   .commit-tooltip {
     min-width: 150px;
     max-width: 190px;
+  }
+
+  .visitor-tooltip {
+    min-width: 150px;
+    max-width: 200px;
   }
 
   .hero-stage {

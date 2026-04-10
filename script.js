@@ -1,7 +1,12 @@
 const graph = document.getElementById("commit-graph");
+const visitorMap = document.getElementById("visitor-map");
 
 if (graph) {
   initCommitGraph(graph);
+}
+
+if (visitorMap) {
+  initVisitorMap(visitorMap);
 }
 
 async function initCommitGraph(graphElement) {
@@ -346,6 +351,267 @@ function showGraphError(message, detail, inspectorMessage, inspectorAuthor, insp
   inspectorSha.textContent = "-";
 }
 
+async function initVisitorMap(visitorElement) {
+  const nodeLayer = document.getElementById("visitor-nodes");
+  const tooltip = document.getElementById("visitor-tooltip");
+  const tooltipName = document.getElementById("visitor-tooltip-name");
+  const tooltipStatus = document.getElementById("visitor-tooltip-status");
+
+  const title = document.getElementById("visitor-title");
+  const summary = document.getElementById("visitor-summary");
+  const count = document.getElementById("visitor-count");
+  const verifiedCount = document.getElementById("visitor-verified-count");
+  const neutralCount = document.getElementById("visitor-neutral-count");
+
+  const owner = visitorElement.dataset.owner;
+  const repo = visitorElement.dataset.repo;
+  const visitorPath = visitorElement.dataset.visitorPath || "Visitors";
+
+  if (!owner || !repo) {
+    title.textContent = "Visitor source is missing.";
+    summary.textContent = "Add data-owner and data-repo so the roster can load.";
+    count.textContent = "-";
+    verifiedCount.textContent = "-";
+    neutralCount.textContent = "-";
+    return;
+  }
+
+  try {
+    const branch = await fetchBranchName(owner, repo, "");
+    const [visitorNames, identityNames] = await Promise.all([
+      fetchVisitorNames(owner, repo, visitorPath, branch),
+      fetchPublicIdentityNames(owner, repo, branch)
+    ]);
+
+    const visitors = visitorNames.map((name) => ({
+      name,
+      verified: identityNames.has(normalizeIdentity(name))
+    }));
+
+    renderVisitorMap(
+      visitors,
+      visitorElement,
+      nodeLayer,
+      tooltip,
+      tooltipName,
+      tooltipStatus,
+      title,
+      summary,
+      count,
+      verifiedCount,
+      neutralCount
+    );
+  } catch (error) {
+    title.textContent = "Visitors could not be loaded.";
+    summary.textContent = error instanceof Error ? error.message : "The GitHub API request failed.";
+    count.textContent = "-";
+    verifiedCount.textContent = "-";
+    neutralCount.textContent = "-";
+  }
+}
+
+async function fetchVisitorNames(owner, repo, visitorPath, branch) {
+  const response = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(visitorPath)}?ref=${encodeURIComponent(branch)}`,
+    {
+      headers: {
+        Accept: "application/vnd.github+json"
+      }
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`GitHub contents API returned ${response.status}.`);
+  }
+
+  const payload = await response.json();
+
+  if (!Array.isArray(payload)) {
+    throw new Error("Visitors folder could not be read.");
+  }
+
+  return payload
+    .filter((entry) => entry.type === "file")
+    .map((entry) => entry.name)
+    .filter((name) => !name.toUpperCase().startsWith("CREATE A FILE"))
+    .sort((left, right) => left.localeCompare(right));
+}
+
+async function fetchPublicIdentityNames(owner, repo, branch) {
+  const [contributors, authors] = await Promise.all([
+    fetchContributorLogins(owner, repo),
+    fetchCommitAuthorNames(owner, repo, branch, 3)
+  ]);
+
+  const identities = new Set();
+  contributors.forEach((name) => identities.add(normalizeIdentity(name)));
+  authors.forEach((name) => identities.add(normalizeIdentity(name)));
+  return identities;
+}
+
+async function fetchContributorLogins(owner, repo) {
+  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contributors?per_page=100`, {
+    headers: {
+      Accept: "application/vnd.github+json"
+    }
+  });
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const payload = await response.json();
+
+  if (!Array.isArray(payload)) {
+    return [];
+  }
+
+  return payload.map((entry) => entry.login).filter(Boolean);
+}
+
+async function fetchCommitAuthorNames(owner, repo, branch, maxPages) {
+  const names = new Set();
+
+  for (let page = 1; page <= maxPages; page += 1) {
+    const url = new URL(`https://api.github.com/repos/${owner}/${repo}/commits`);
+    url.searchParams.set("sha", branch);
+    url.searchParams.set("per_page", "100");
+    url.searchParams.set("page", String(page));
+
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/vnd.github+json"
+      }
+    });
+
+    if (!response.ok) {
+      break;
+    }
+
+    const payload = await response.json();
+
+    if (!Array.isArray(payload) || payload.length === 0) {
+      break;
+    }
+
+    payload.forEach((entry) => {
+      if (entry.author?.login) {
+        names.add(entry.author.login);
+      }
+
+      if (entry.commit?.author?.name) {
+        names.add(entry.commit.author.name);
+      }
+    });
+
+    if (payload.length < 100) {
+      break;
+    }
+  }
+
+  return [...names];
+}
+
+function renderVisitorMap(
+  visitors,
+  visitorElement,
+  nodeLayer,
+  tooltip,
+  tooltipName,
+  tooltipStatus,
+  title,
+  summary,
+  count,
+  verifiedCount,
+  neutralCount
+) {
+  nodeLayer.replaceChildren();
+
+  const verifiedVisitors = visitors.filter((visitor) => visitor.verified).length;
+  const neutralVisitors = visitors.length - verifiedVisitors;
+
+  count.textContent = String(visitors.length);
+  verifiedCount.textContent = String(verifiedVisitors);
+  neutralCount.textContent = String(neutralVisitors);
+
+  if (visitors.length === 0) {
+    title.textContent = "No visitors yet.";
+    summary.textContent = "Once the class starts adding files to the Visitors folder, stars will appear here.";
+    return;
+  }
+
+  title.textContent = `${visitors.length} visitors in orbit`;
+  summary.textContent = "Each file in the Visitors folder becomes a star in the constellation.";
+
+  const points = createVisitorLayout(visitors.length);
+  let activeNode = null;
+
+  visitors.forEach((visitor, index) => {
+    const point = points[index];
+    const node = document.createElement("button");
+    node.type = "button";
+    node.className = `visitor-node${visitor.verified ? " is-verified" : ""}`;
+    node.style.left = `${point.x}%`;
+    node.style.top = `${point.y}%`;
+    node.setAttribute(
+      "aria-label",
+      `${visitor.name}. Visitor star.`
+    );
+
+    const label = document.createElement("span");
+    label.className = "visitor-node-label";
+    label.textContent = visitor.name;
+    node.appendChild(label);
+
+    node.addEventListener("mouseenter", () => activateVisitor(node, visitor, point));
+    node.addEventListener("focus", () => activateVisitor(node, visitor, point));
+    node.addEventListener("click", () => activateVisitor(node, visitor, point));
+
+    nodeLayer.appendChild(node);
+
+    if (index === 0) {
+      activateVisitor(node, visitor, point, false);
+    }
+  });
+
+  visitorElement.addEventListener("pointermove", (event) => {
+    const bounds = visitorElement.getBoundingClientRect();
+    visitorElement.style.setProperty("--visitor-glow-x", `${event.clientX - bounds.left}px`);
+    visitorElement.style.setProperty("--visitor-glow-y", `${event.clientY - bounds.top}px`);
+  });
+
+  visitorElement.addEventListener("pointerleave", () => {
+    tooltip.classList.remove("is-visible");
+    visitorElement.style.setProperty("--visitor-glow-x", "50%");
+    visitorElement.style.setProperty("--visitor-glow-y", "50%");
+  });
+
+  function activateVisitor(node, visitor, point, showTooltip = true) {
+    if (activeNode) {
+      activeNode.classList.remove("is-active");
+    }
+
+    activeNode = node;
+    activeNode.classList.add("is-active");
+
+    title.textContent = visitor.name;
+    summary.textContent = visitor.verified
+      ? "A bright star in the constellation."
+      : "A quiet star in the constellation.";
+
+    tooltipName.textContent = visitor.name;
+    tooltipStatus.textContent = visitor.verified
+      ? "Bright star"
+      : "Quiet star";
+    tooltip.style.left = `${clamp(point.x, 14, 86)}%`;
+    tooltip.style.top = `${clamp(point.y - 4, 18, 84)}%`;
+
+    if (showTooltip) {
+      tooltip.classList.add("is-visible");
+    }
+  }
+}
+
 function buildPath(points) {
   if (points.length === 0) {
     return "";
@@ -385,4 +651,29 @@ function formatShortDate(value) {
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+function createVisitorLayout(count) {
+  const points = [];
+  const centerX = 50;
+  const centerY = 58;
+  const maxRadius = 33;
+  const goldenAngle = 2.399963229728653;
+
+  for (let index = 0; index < count; index += 1) {
+    const ratio = count === 1 ? 0.25 : (index + 1) / (count + 1);
+    const radius = 8 + maxRadius * Math.sqrt(ratio);
+    const angle = index * goldenAngle - Math.PI / 2;
+
+    points.push({
+      x: clamp(centerX + Math.cos(angle) * radius, 10, 90),
+      y: clamp(centerY + Math.sin(angle) * radius * 0.88, 18, 88)
+    });
+  }
+
+  return points;
+}
+
+function normalizeIdentity(value) {
+  return value.trim().toLowerCase();
 }
