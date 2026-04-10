@@ -503,10 +503,13 @@ h1 {
 }
 
 .commit-node-label {
-  position: absolute;
-  top: -1.45rem;
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.22rem 0.45rem;
   border-radius: 999px;
   background: rgba(8, 18, 31, 0.9);
@@ -516,6 +519,17 @@ h1 {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
+  pointer-events: none;
+}
+
+.commit-node-badges {
+  position: absolute;
+  top: -1.45rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
   pointer-events: none;
 }
 

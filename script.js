@@ -1,122 +1,10 @@
-const commits = [
-  {
-    sha: "7443395",
-    author: "4gnusd3i",
-    time: "2025-02-06T09:43:11+01:00",
-    message: "Initial commit",
-    summary: "The repo begins here with the very first snapshot."
-  },
-  {
-    sha: "1e6764e",
-    author: "4gnusd3i",
-    time: "2025-02-06T10:03:07+01:00",
-    message: "Added files for webpage and readme",
-    summary: "The first real structure lands: webpage files and the README."
-  },
-  {
-    sha: "61997e7",
-    author: "4gnusd3i",
-    time: "2025-02-06T10:16:53+01:00",
-    message: "Updated ReadMe",
-    summary: "The guide starts evolving through iterative documentation passes."
-  },
-  {
-    sha: "a526fbe",
-    author: "4gnusd3i",
-    time: "2025-02-06T10:30:04+01:00",
-    message: "Readme guide finished",
-    summary: "A milestone commit where the guide first feels complete."
-  },
-  {
-    sha: "879da65",
-    author: "4gnusd3i",
-    time: "2025-02-06T11:00:04+01:00",
-    message: "Updated Readme",
-    summary: "More cleanup and refinement in the written walkthrough."
-  },
-  {
-    sha: "09eb4b0",
-    author: "4gnusd3i",
-    time: "2025-02-06T11:00:46+01:00",
-    message: "Update readme formatting",
-    summary: "Formatting work makes the teaching material easier to scan."
-  },
-  {
-    sha: "37d2ff2",
-    author: "4gnusd3i",
-    time: "2025-02-06T11:02:20+01:00",
-    message: "small changes to readme",
-    summary: "Small edits that tighten the overall guide."
-  },
-  {
-    sha: "23bfbcb",
-    author: "4gnusd3i",
-    time: "2025-02-06T11:04:01+01:00",
-    message: "formatting",
-    summary: "Another polish pass focused on readability."
-  },
-  {
-    sha: "5499e23",
-    author: "4gnusd3i",
-    time: "2025-02-06T11:11:17+01:00",
-    message: "hopefully final version of guide",
-    summary: "The optimistic pre-finale commit that every project eventually has."
-  },
-  {
-    sha: "2f1fcf4",
-    author: "4gnusd3i",
-    time: "2025-02-06T11:19:41+01:00",
-    message: "Update README.md",
-    summary: "The README keeps shifting as the teaching story becomes clearer."
-  },
-  {
-    sha: "f7800e2",
-    author: "4gnusd3i",
-    time: "2026-04-09T14:24:01+02:00",
-    message: "changed content of readme",
-    summary: "A later revisit brings the old guide back into active motion."
-  },
-  {
-    sha: "a285001",
-    author: "4gnusd3i",
-    time: "2026-04-09T14:27:10+02:00",
-    message: "Enhance README with GitHub actions information",
-    summary: "The repo broadens beyond basics and starts pointing at collaboration tools."
-  },
-  {
-    sha: "53f232d",
-    author: "Excellence308",
-    time: "2026-04-10T00:16:49+02:00",
-    message: "Changed README.md to explicitly mention the fork",
-    summary: "The fork-based identity of the project becomes explicit."
-  },
-  {
-    sha: "78054a8",
-    author: "Excellence308",
-    time: "2026-04-10T09:16:11+02:00",
-    message: "Cleaned up comments for clarity",
-    summary: "The project shifts from rough notes toward a sharper presentation."
-  },
-  {
-    sha: "70d66ac",
-    author: "Excellence308",
-    time: "2026-04-10T09:35:00+02:00",
-    message: "Cleaned up the graphic. Added personalized title.",
-    summary: "The page becomes more expressive and visibly yours."
-  },
-  {
-    sha: "fb1f35a",
-    author: "Excellence308",
-    time: "2026-04-10T09:40:14+02:00",
-    message: "Simplified title",
-    summary: "The latest visible commit trims the branding into its current form.",
-    labels: ["HEAD"]
-  }
-];
-
 const graph = document.getElementById("commit-graph");
 
 if (graph) {
+  initCommitGraph(graph);
+}
+
+async function initCommitGraph(graphElement) {
   const nodeLayer = document.getElementById("commit-nodes");
   const tooltip = document.getElementById("commit-tooltip");
   const tooltipAuthor = document.getElementById("tooltip-author");
@@ -127,6 +15,207 @@ if (graph) {
   const inspectorAuthor = document.getElementById("inspector-author");
   const inspectorTime = document.getElementById("inspector-time");
   const inspectorSha = document.getElementById("inspector-sha");
+
+  const owner = graphElement.dataset.owner;
+  const repo = graphElement.dataset.repo;
+  const branch = graphElement.dataset.branch || "main";
+  const limit = Number.parseInt(graphElement.dataset.commitLimit || "18", 10);
+
+  if (!owner || !repo) {
+    showGraphError(
+      "Repository metadata is missing.",
+      "Add data-owner and data-repo attributes so the graph knows what to load.",
+      inspectorMessage,
+      inspectorAuthor,
+      inspectorTime,
+      inspectorSha
+    );
+    return;
+  }
+
+  try {
+    const [commits, tags] = await Promise.all([
+      fetchCommits(owner, repo, branch, limit),
+      fetchTags(owner, repo)
+    ]);
+
+    const commitData = decorateCommits(commits, tags, branch);
+    renderCommitGraph(
+      commitData,
+      graphElement,
+      nodeLayer,
+      tooltip,
+      tooltipAuthor,
+      tooltipTime,
+      path,
+      inspectorMessage,
+      inspectorAuthor,
+      inspectorTime,
+      inspectorSha
+    );
+  } catch (error) {
+    showGraphError(
+      "Commit history could not be loaded.",
+      error instanceof Error ? error.message : "The GitHub API request failed.",
+      inspectorMessage,
+      inspectorAuthor,
+      inspectorTime,
+      inspectorSha
+    );
+  }
+}
+
+async function fetchCommits(owner, repo, branch, limit) {
+  const url = new URL(`https://api.github.com/repos/${owner}/${repo}/commits`);
+  url.searchParams.set("sha", branch);
+  url.searchParams.set("per_page", String(limit));
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/vnd.github+json"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub commits API returned ${response.status}.`);
+  }
+
+  const payload = await response.json();
+
+  if (!Array.isArray(payload) || payload.length === 0) {
+    throw new Error("No commits were returned for this repository.");
+  }
+
+  return payload;
+}
+
+async function fetchTags(owner, repo) {
+  const url = new URL(`https://api.github.com/repos/${owner}/${repo}/git/matching-refs/tags`);
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/vnd.github+json"
+    }
+  });
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const payload = await response.json();
+
+  if (!Array.isArray(payload)) {
+    return [];
+  }
+
+  const resolvedTags = await Promise.all(
+    payload.map(async (tagRef) => {
+      const name = tagRef.ref?.replace("refs/tags/", "");
+      const objectSha = tagRef.object?.sha;
+      const objectType = tagRef.object?.type;
+
+      if (!name || !objectSha || !objectType) {
+        return null;
+      }
+
+      if (objectType === "commit") {
+        return { name, sha: objectSha };
+      }
+
+      if (objectType === "tag") {
+        const annotatedTargetSha = await fetchAnnotatedTagTarget(owner, repo, objectSha);
+
+        if (annotatedTargetSha) {
+          return { name, sha: annotatedTargetSha };
+        }
+      }
+
+      return null;
+    })
+  );
+
+  return resolvedTags.filter(Boolean);
+}
+
+async function fetchAnnotatedTagTarget(owner, repo, tagSha) {
+  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/tags/${tagSha}`, {
+    headers: {
+      Accept: "application/vnd.github+json"
+    }
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = await response.json();
+  return payload?.object?.type === "commit" ? payload.object.sha : null;
+}
+
+function decorateCommits(commits, tags, branch) {
+  const tagsBySha = new Map();
+
+  tags.forEach((tag) => {
+    const sha = tag?.sha;
+
+    if (!sha) {
+      return;
+    }
+
+    const current = tagsBySha.get(sha) || [];
+    current.push(tag.name);
+    tagsBySha.set(sha, current);
+  });
+
+  const chronologicalCommits = [...commits].reverse();
+
+  return chronologicalCommits.map((entry, index) => {
+    const author =
+      entry.author?.login ||
+      entry.commit?.author?.name ||
+      "Unknown author";
+
+    const time =
+      entry.commit?.author?.date ||
+      entry.commit?.committer?.date ||
+      new Date().toISOString();
+
+    const message = entry.commit?.message?.split("\n")[0] || "Untitled commit";
+    const sha = entry.sha.slice(0, 7);
+    const labels = [];
+
+    if (index === chronologicalCommits.length - 1) {
+      labels.push("HEAD", branch);
+    }
+
+    const tagNames = tagsBySha.get(entry.sha) || [];
+    labels.push(...tagNames.slice(0, 2));
+
+    return {
+      sha,
+      fullSha: entry.sha,
+      author,
+      time,
+      message,
+      labels
+    };
+  });
+}
+
+function renderCommitGraph(
+  commits,
+  graphElement,
+  nodeLayer,
+  tooltip,
+  tooltipAuthor,
+  tooltipTime,
+  path,
+  inspectorMessage,
+  inspectorAuthor,
+  inspectorTime,
+  inspectorSha
+) {
+  nodeLayer.replaceChildren();
 
   const viewport = { width: 1000, height: 420, padding: 72 };
   const span = viewport.width - viewport.padding * 2;
@@ -162,17 +251,23 @@ if (graph) {
       `${commit.message} by ${commit.author} on ${formatLongDate(commit.time)}`
     );
 
-    if (Array.isArray(commit.labels)) {
+    if (commit.labels.length > 0) {
+      const badges = document.createElement("span");
+      badges.className = "commit-node-badges";
+
       commit.labels.forEach((label) => {
         const pill = document.createElement("span");
         pill.className = "commit-node-label";
         pill.textContent = label;
-        node.appendChild(pill);
+        badges.appendChild(pill);
       });
+
+      node.appendChild(badges);
     }
 
     node.addEventListener("mouseenter", () => activateCommit(node, commit));
     node.addEventListener("focus", () => activateCommit(node, commit));
+    node.addEventListener("click", () => activateCommit(node, commit));
 
     nodeLayer.appendChild(node);
 
@@ -181,18 +276,18 @@ if (graph) {
     }
   });
 
-  graph.addEventListener("pointermove", (event) => {
-    const bounds = graph.getBoundingClientRect();
+  graphElement.addEventListener("pointermove", (event) => {
+    const bounds = graphElement.getBoundingClientRect();
     const x = event.clientX - bounds.left;
     const y = event.clientY - bounds.top;
-    graph.style.setProperty("--glow-x", `${x}px`);
-    graph.style.setProperty("--glow-y", `${y}px`);
+    graphElement.style.setProperty("--glow-x", `${x}px`);
+    graphElement.style.setProperty("--glow-y", `${y}px`);
   });
 
-  graph.addEventListener("pointerleave", () => {
+  graphElement.addEventListener("pointerleave", () => {
     tooltip.classList.remove("is-visible");
-    graph.style.setProperty("--glow-x", "50%");
-    graph.style.setProperty("--glow-y", "50%");
+    graphElement.style.setProperty("--glow-x", "50%");
+    graphElement.style.setProperty("--glow-y", "50%");
   });
 
   function activateCommit(node, commit, showTooltip = true) {
@@ -221,6 +316,13 @@ if (graph) {
       tooltip.classList.add("is-visible");
     }
   }
+}
+
+function showGraphError(message, detail, inspectorMessage, inspectorAuthor, inspectorTime, inspectorSha) {
+  inspectorMessage.textContent = message;
+  inspectorAuthor.textContent = "Unavailable";
+  inspectorTime.textContent = detail;
+  inspectorSha.textContent = "-";
 }
 
 function buildPath(points) {
