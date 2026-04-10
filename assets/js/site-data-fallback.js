@@ -132,9 +132,7 @@ window.SITE_DATA_FALLBACK = {
       "author": "Excellence308",
       "time": "2026-04-10T10:09:29+02:00",
       "message": "Add Feature: Interactive commit history",
-      "labels": [
-        "Interactive-Viewer"
-      ]
+      "labels": []
     },
     {
       "sha": "4af2e5e",
@@ -232,9 +230,7 @@ window.SITE_DATA_FALLBACK = {
       "author": "Excellence308",
       "time": "2026-04-10T11:11:50+02:00",
       "message": "Add Feature: Starchart visualizer for students",
-      "labels": [
-        "Visitors-Starchart"
-      ]
+      "labels": []
     },
     {
       "sha": "2eeaf04",
@@ -318,10 +314,7 @@ window.SITE_DATA_FALLBACK = {
       "author": "Excellence308",
       "time": "2026-04-10T12:22:46+02:00",
       "message": "Added star snapping",
-      "labels": [
-        "HEAD",
-        "main"
-      ]
+      "labels": []
     }
   ],
   "visitors": [
@@ -358,4 +351,5 @@ window.SITE_DATA_FALLBACK = {
       "verified": true
     }
   ]
-};
+}
+;

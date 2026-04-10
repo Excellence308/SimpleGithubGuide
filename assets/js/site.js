@@ -75,21 +75,12 @@ async function initCommitGraph(graphElement) {
 
 async function initVisitorMap(visitorElement) {
   const nodeLayer = document.getElementById("visitor-nodes");
-  const tooltip = document.getElementById("visitor-tooltip");
-  const tooltipName = document.getElementById("visitor-tooltip-name");
 
   try {
     const siteData = await siteDataPromise;
-    renderVisitorMap(
-      siteData.visitors,
-      visitorElement,
-      nodeLayer,
-      tooltip,
-      tooltipName
-    );
-  } catch (error) {
-    tooltipName.textContent = error instanceof Error ? error.message : "Visitors could not be loaded.";
-    tooltip.classList.add("is-visible");
+    renderVisitorMap(siteData.visitors, visitorElement, nodeLayer);
+  } catch {
+    nodeLayer.replaceChildren();
   }
 }
 
@@ -225,20 +216,10 @@ function renderCommitGraph(
   }
 }
 
-function renderVisitorMap(
-  visitors,
-  visitorElement,
-  nodeLayer,
-  tooltip,
-  tooltipName
-) {
+function renderVisitorMap(visitors, visitorElement, nodeLayer) {
   nodeLayer.replaceChildren();
 
   if (visitors.length === 0) {
-    tooltipName.textContent = "No visitors yet.";
-    tooltip.style.left = "50%";
-    tooltip.style.top = "50%";
-    tooltip.classList.add("is-visible");
     return;
   }
 
@@ -262,19 +243,19 @@ function renderVisitorMap(
     label.textContent = visitor.name;
     node.appendChild(label);
 
-    node.addEventListener("mouseenter", () => activateVisitor(node, visitor, point, false, "hover"));
+    node.addEventListener("mouseenter", () => activateVisitor(node, "hover"));
     node.addEventListener("mouseleave", () => {
       if (activeNode === node && activeMode === "hover") {
         clearActiveVisitor();
       }
     });
-    node.addEventListener("focus", () => activateVisitor(node, visitor, point, true, "focus"));
+    node.addEventListener("focus", () => activateVisitor(node, "focus"));
     node.addEventListener("blur", () => {
       if (activeNode === node && activeMode === "focus") {
         clearActiveVisitor();
       }
     });
-    node.addEventListener("click", () => activateVisitor(node, visitor, point, true, "click"));
+    node.addEventListener("click", () => activateVisitor(node, "click"));
 
     nodeLayer.appendChild(node);
     starNodes.push({ node, point });
@@ -291,7 +272,6 @@ function renderVisitorMap(
   });
 
   visitorElement.addEventListener("pointerleave", () => {
-    tooltip.classList.remove("is-visible");
     visitorElement.style.setProperty("--visitor-glow-opacity", "0");
     displaceVisitorStars(starNodes, null, null, 1, 1);
 
@@ -307,10 +287,9 @@ function renderVisitorMap(
 
     activeNode = null;
     activeMode = "";
-    tooltip.classList.remove("is-visible");
   }
 
-  function activateVisitor(node, visitor, point, showTooltip = true, mode = "click") {
+  function activateVisitor(node, mode = "click") {
     if (activeNode && activeNode !== node) {
       activeNode.classList.remove("is-active");
     }
@@ -318,16 +297,6 @@ function renderVisitorMap(
     activeNode = node;
     activeMode = mode;
     activeNode.classList.add("is-active");
-
-    tooltipName.textContent = visitor.name;
-    tooltip.style.left = `${clamp(point.x, 14, 86)}%`;
-    tooltip.style.top = `${clamp(point.y - 4, 18, 84)}%`;
-
-    if (showTooltip) {
-      tooltip.classList.add("is-visible");
-    } else {
-      tooltip.classList.remove("is-visible");
-    }
   }
 }
 

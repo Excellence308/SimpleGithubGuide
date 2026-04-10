@@ -776,33 +776,6 @@ h1 {
   pointer-events: none;
 }
 
-.visitor-tooltip {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  min-width: 180px;
-  max-width: 250px;
-  padding: 0.8rem 0.9rem;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(10, 18, 31, 0.92);
-  box-shadow: 0 20px 60px rgba(3, 9, 16, 0.35);
-  transform: translate(-50%, calc(-100% - 1rem));
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 160ms ease;
-  z-index: 3;
-}
-
-.visitor-tooltip.is-visible {
-  opacity: 1;
-}
-
-.visitor-tooltip strong {
-  display: block;
-  font-size: 0.98rem;
-}
-
 @keyframes shimmer {
   to {
     transform: translateX(120%);
@@ -1035,11 +1008,6 @@ h1 {
   .commit-tooltip {
     min-width: 150px;
     max-width: 190px;
-  }
-
-  .visitor-tooltip {
-    min-width: 150px;
-    max-width: 200px;
   }
 
   .hero-stage {
