@@ -199,21 +199,21 @@
     },
     {
       "sha": "840d909",
-      "author": "4gnusd3i",
+      "author": "RefridgeRaider",
       "time": "2026-04-10T11:04:43+02:00",
       "message": "Merge pull request #4 from RefridgeRaider/dev",
       "labels": []
     },
     {
       "sha": "df7bf6f",
-      "author": "4gnusd3i",
+      "author": "Puze87",
       "time": "2026-04-10T11:05:14+02:00",
       "message": "Merge pull request #7 from Puze87/main",
       "labels": []
     },
     {
       "sha": "3e7b1a9",
-      "author": "4gnusd3i",
+      "author": "oksnoopy",
       "time": "2026-04-10T11:05:37+02:00",
       "message": "Merge pull request #6 from oksnoopy/main",
       "labels": []
@@ -255,7 +255,7 @@
     },
     {
       "sha": "6efd364",
-      "author": "4gnusd3i",
+      "author": "Excellence308",
       "time": "2026-04-10T11:24:03+02:00",
       "message": "Merge pull request #10 from Excellence308/visitors",
       "labels": []
@@ -363,6 +363,13 @@
       "author": "Karyna Zakabluk",
       "time": "2026-04-10T13:15:46+02:00",
       "message": "Add test file (#18)",
+      "labels": []
+    },
+    {
+      "sha": "40d6d14",
+      "author": "Excellence308",
+      "time": "2026-04-10T14:04:08+02:00",
+      "message": "Added more stars. Made scripts OS-agnostic",
       "labels": []
     }
   ],

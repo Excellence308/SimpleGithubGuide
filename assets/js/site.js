@@ -34,6 +34,7 @@ if (visitorMap) {
 
 async function initCommitGraph(graphElement) {
   const nodeLayer = document.getElementById("commit-nodes");
+  const glowLayer = document.getElementById("commit-glow");
   const tooltip = document.getElementById("commit-tooltip");
   const tooltipAuthor = document.getElementById("tooltip-author");
   const tooltipTime = document.getElementById("tooltip-time");
@@ -52,6 +53,7 @@ async function initCommitGraph(graphElement) {
       commits,
       graphElement,
       nodeLayer,
+      glowLayer,
       tooltip,
       tooltipAuthor,
       tooltipTime,
@@ -88,6 +90,7 @@ function renderCommitGraph(
   commits,
   graphElement,
   nodeLayer,
+  glowLayer,
   tooltip,
   tooltipAuthor,
   tooltipTime,
@@ -127,6 +130,8 @@ function renderCommitGraph(
 
   let activeNode = null;
   let activeCommit = null;
+  let hoverX = null;
+  let hoverY = null;
 
   points.forEach((commit, index) => {
     const node = document.createElement("button");
@@ -135,6 +140,7 @@ function renderCommitGraph(
     node.style.left = `${commit.x}px`;
     node.style.top = `${commit.y}px`;
     node.dataset.author = commit.author;
+    applyCommitNodeStyle(node, commit.author);
     node.setAttribute(
       "aria-label",
       `${commit.message} by ${commit.author} on ${formatLongDate(commit.time)}`
@@ -167,20 +173,24 @@ function renderCommitGraph(
 
   graphElement.addEventListener("pointermove", (event) => {
     const bounds = graphElement.getBoundingClientRect();
-    graphElement.style.setProperty("--glow-x", `${event.clientX - bounds.left}px`);
-    graphElement.style.setProperty("--glow-y", `${event.clientY - bounds.top}px`);
+    hoverX = event.clientX - bounds.left;
+    hoverY = event.clientY - bounds.top;
+    glowLayer.style.setProperty("--graph-glow-opacity", "1");
+    updateGraphGlow();
   });
 
   graphElement.addEventListener("pointerleave", () => {
+    hoverX = null;
+    hoverY = null;
     tooltip.classList.remove("is-visible");
-    graphElement.style.setProperty("--glow-x", "50%");
-    graphElement.style.setProperty("--glow-y", "50%");
+    glowLayer.style.setProperty("--graph-glow-opacity", "0");
   });
 
   graphElement.addEventListener("scroll", () => {
     if (activeCommit) {
       positionCommitTooltip(activeCommit);
     }
+    updateGraphGlow();
   });
 
   graphElement.scrollLeft = Math.max(graphElement.scrollWidth - graphElement.clientWidth, 0);
@@ -213,6 +223,15 @@ function renderCommitGraph(
     const visibleX = commit.x - graphElement.scrollLeft;
     tooltip.style.left = `${clamp(visibleX, 110, graphElement.clientWidth - 110)}px`;
     tooltip.style.top = `${clamp(commit.y - 18, 86, viewport.height - 30)}px`;
+  }
+
+  function updateGraphGlow() {
+    if (hoverX === null || hoverY === null) {
+      return;
+    }
+
+    glowLayer.style.setProperty("--glow-x", `${hoverX}px`);
+    glowLayer.style.setProperty("--glow-y", `${hoverY}px`);
   }
 }
 
@@ -305,6 +324,26 @@ function showGraphError(message, detail, inspectorMessage, inspectorAuthor, insp
   inspectorAuthor.textContent = "Unavailable";
   inspectorTime.textContent = detail;
   inspectorSha.textContent = "-";
+}
+
+function applyCommitNodeStyle(node, author) {
+  const normalizedAuthor = author.trim().toLowerCase();
+  let hash = 0;
+
+  for (let index = 0; index < normalizedAuthor.length; index += 1) {
+    hash = ((hash << 5) - hash + normalizedAuthor.charCodeAt(index)) | 0;
+  }
+
+  const hue = Math.abs(hash) % 360;
+  const core = `hsl(${hue} 95% 82%)`;
+  const edge = `hsl(${(hue + 24) % 360} 88% 64%)`;
+  const glow = `hsla(${hue} 90% 68% / 0.42)`;
+  const ring = `hsla(${hue} 85% 76% / 0.18)`;
+
+  node.style.setProperty("--commit-core", core);
+  node.style.setProperty("--commit-edge", edge);
+  node.style.setProperty("--commit-glow", glow);
+  node.style.setProperty("--commit-ring", ring);
 }
 
 function buildPath(points) {

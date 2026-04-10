@@ -62,6 +62,19 @@ awk \
     label_count += 1
   }
 
+  function normalize_commit_author(author_name, subject,    source_ref, source_parts) {
+    if (subject ~ /^Merge pull request #[0-9]+ from /) {
+      source_ref = subject
+      sub(/^Merge pull request #[0-9]+ from /, "", source_ref)
+      split(source_ref, source_parts, "/")
+      if (length(source_parts[1]) > 0) {
+        return source_parts[1]
+      }
+    }
+
+    return author_name
+  }
+
   BEGIN {
     FS = "\037"
     RS = "\n"
@@ -127,7 +140,7 @@ awk \
 
     full_sha = $1
     short_sha = $2
-    author = $3
+    author = normalize_commit_author($3, $5)
     commit_time = $4
     message = $5
 
